@@ -63,59 +63,6 @@ class AuthApi{
         private const val TAG = "AuthApi"
     }
 
-    /**
-     * @param username The username to be used for sign-in.
-     * @return The Session ID.
-     */
-    suspend fun username(username: String): ApiResult<Unit> {
-        val call = client.newCall(
-                Request.Builder()
-                        .url("$BASE_URL/username")
-                        .method("POST", jsonRequestBody {
-                            name("username").value(username)
-                        })
-                        .build()
-        )
-        val response = call.await()
-        return response.result("Error calling /username") { }
-    }
-
-    /**
-     * @param sessionId The session ID received on `username()`.
-     * @param password A password.
-     * @return An [ApiResult].
-     */
-    suspend fun password(sessionId: String, password: String): ApiResult<Unit> {
-        val call = client.newCall(
-                Request.Builder()
-                        .url("$BASE_URL/password")
-                        .addHeader("Cookie", formatCookie(sessionId))
-                        .method("POST", jsonRequestBody {
-                            name("password").value(password)
-                        })
-                        .build()
-        )
-        val response = call.await()
-        return response.result("Error calling /password") { }
-    }
-
-    /**
-     * @param sessionId The session ID.
-     * @return A list of all the credentials registered on the server.
-     */
-//    suspend fun getKeys(sessionId: String): ApiResult<List<Credential>> {
-//        val call = client.newCall(
-//                Request.Builder()
-//                        .url("$BASE_URL/getKeys")
-//                        .addHeader("Cookie", formatCookie(sessionId))
-//                        .method("POST", jsonRequestBody {})
-//                        .build()
-//        )
-//        val response = call.await()
-//        return response.result("Error calling /getKeys") {
-//            parseUserCredentials(body ?: throw ApiException("Empty response from /getKeys"))
-//        }
-//    }
 
     /**
      * @param sessionId The session ID.
@@ -184,22 +131,6 @@ class AuthApi{
         } catch (e: Exception) {
             ApiResult.Success("", "")
         }
-    }
-
-    /**
-     * @param sessionId The session ID.
-     * @param credentialId The credential ID to be removed.
-     */
-    suspend fun removeKey(sessionId: String, credentialId: String): ApiResult<Unit> {
-        val call = client.newCall(
-                Request.Builder()
-                        .url("$BASE_URL/removeKey?credId=$credentialId")
-                        .addHeader("Cookie", formatCookie(sessionId))
-                        .method("POST", jsonRequestBody {})
-                        .build()
-        )
-        val response = call.await()
-        return response.result("Error calling /removeKey") { }
     }
 
     /**
@@ -296,7 +227,6 @@ class AuthApi{
     ): PublicKeyCredentialCreationOptions? {
         val builder = PublicKeyCredentialCreationOptions.Builder()
         val jsonObject = JSONObject(body.string())
-        print("SADASDS $jsonObject")
         if(jsonObject.has("publicKey")) {
             val json = jsonObject.getJSONObject("publicKey").toString()
             val registerBeginModel = Gson().fromJson(json, RegisterBeginModel::class.java)

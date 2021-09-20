@@ -44,7 +44,6 @@ class AuthRepository constructor(context: Context) {
         private const val TAG = "AuthRepository"
 
         // Keys for SharedPreferences
-        private const val PREFS_NAME = "auth"
         private const val PREF_USERNAME = "username"
         private const val PREF_ACCESS_TOKEN = "accessToken"
         private const val PREF_SESSION_ID = "session_id"
@@ -66,58 +65,6 @@ class AuthRepository constructor(context: Context) {
             onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
     val signInState = signInStateMutable.asSharedFlow()
-
-    @WorkerThread
-    private suspend fun refreshCredentials() {
-//        val sessionId = prefs.getString(PREF_SESSION_ID, null)!!
-//        when (val result = api.getKeys(sessionId)) {
-//            ApiResult.SignedOutFromServer -> forceSignOut()
-//            is ApiResult.Success -> {
-//                prefs.edit(commit = true) {
-//                    result.sessionId?.let { putString(PREF_SESSION_ID, it) }
-//                    putStringSet(PREF_CREDENTIALS, result.data.toStringSet())
-//                }
-//            }
-//        }
-    }
-
-    private fun List<Credential>.toStringSet(): Set<String> {
-        return mapIndexed { index, credential ->
-            "$index;${credential.id};${credential.publicKey}"
-        }.toSet()
-    }
-
-    private fun parseCredentials(set: Set<String>): List<Credential> {
-        return set.map { s ->
-            val (index, id, publicKey) = s.split(";")
-            index to Credential(id, publicKey)
-        }.sortedBy { (index, _) -> index }
-                .map { (_, credential) -> credential }
-    }
-
-    /**
-     * Clears the credentials. The sign-in state will proceed to [SignInState.SigningIn].
-     */
-    suspend fun clearCredentials() {
-        val username = prefs.getString(PREF_USERNAME, null)!!
-        prefs.edit(commit = true) {
-            remove(PREF_CREDENTIALS)
-        }
-        signInStateMutable.emit(SignInState.SigningIn(username))
-    }
-
-    /**
-     * Clears all the sign-in information. The sign-in state will proceed to
-     * [SignInState.SignedOut].
-     */
-    suspend fun signOut() {
-        prefs.edit(commit = true) {
-            remove(PREF_USERNAME)
-            remove(PREF_SESSION_ID)
-            remove(PREF_CREDENTIALS)
-        }
-        signInStateMutable.emit(SignInState.SignedOut)
-    }
 
     suspend fun addUsername(username: String) {
         prefs.edit(commit = true) {

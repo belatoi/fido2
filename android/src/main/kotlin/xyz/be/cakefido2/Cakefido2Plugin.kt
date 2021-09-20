@@ -42,7 +42,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
     var mFidoResult: Result? = null
 
     override fun onAttachedToEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
-        channel = MethodChannel(binding.binaryMessenger, "test1")
+        channel = MethodChannel(binding.binaryMessenger, "cakefido2")
         channel.setMethodCallHandler(this)
         viewModel = MainViewModel(binding.applicationContext)
     }
@@ -61,6 +61,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
             "actionSetHeader" -> {
                 Utils.getInstance().header = map?.get("header") as? HashMap<String, String>
                         ?: HashMap()
+                result.success(true)
             }
             "actionSignInRequest" -> {
                 val userName = map?.get("user_name") as? String
@@ -108,8 +109,10 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                         mFidoResult?.success(state.data)
                     }
                     is SignInState.RegisterFailed -> {
+                        mFidoResult?.success(false)
                     }
                     is SignInState.RegisterPass -> {
+                        mFidoResult?.success(true)
                     }
                 }
             }
