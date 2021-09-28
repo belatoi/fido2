@@ -72,4 +72,5 @@ dependencies {
     implementation "ru.gildor.coroutines:kotlin-coroutines-okhttp:1.0"
 
     implementation "androidx.activity:activity-ktx:1.1.0"
+    implementation 'com.github.mrmike:ok2curl:0.7.0'
 }

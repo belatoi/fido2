@@ -30,6 +30,9 @@ import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialRpEntity
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialType
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialUserEntity
 import com.google.gson.Gson
+import com.moczul.ok2curl.CurlInterceptor
+import com.moczul.ok2curl.logger.Loggable
+import io.flutter.BuildConfig
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -47,10 +50,14 @@ import java.util.concurrent.TimeUnit
 /**
  * Interacts with the server API.
  */
-class AuthApi{
+class AuthApi {
 
     private val client: OkHttpClient = OkHttpClient.Builder()
             .addInterceptor(AddHeaderInterceptor())
+            .addInterceptor(CurlInterceptor {
+                if (BuildConfig.DEBUG)
+                    Log.v("Ok2Curl", it)
+            })
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(40, TimeUnit.SECONDS)
             .connectTimeout(40, TimeUnit.SECONDS)
@@ -210,9 +217,9 @@ class AuthApi{
     ): PublicKeyCredentialRequestOptions? {
         val builder = PublicKeyCredentialRequestOptions.Builder()
         val jsonObject = JSONObject(body.string())
-        if(jsonObject.has("publicKey")) {
+        if (jsonObject.has("publicKey")) {
             val json = jsonObject.getJSONObject("publicKey").toString()
-            val loginBeginModel = Gson().fromJson(json,LoginBeginModel::class.java)
+            val loginBeginModel = Gson().fromJson(json, LoginBeginModel::class.java)
             builder.setChallenge(loginBeginModel.challenge.decodeBase64API())
             builder.setRpId(loginBeginModel.rpId)
             builder.setTimeoutSeconds(loginBeginModel.timeout)
@@ -227,7 +234,7 @@ class AuthApi{
     ): PublicKeyCredentialCreationOptions? {
         val builder = PublicKeyCredentialCreationOptions.Builder()
         val jsonObject = JSONObject(body.string())
-        if(jsonObject.has("publicKey")) {
+        if (jsonObject.has("publicKey")) {
             val json = jsonObject.getJSONObject("publicKey").toString()
             val registerBeginModel = Gson().fromJson(json, RegisterBeginModel::class.java)
             builder.setChallenge(registerBeginModel.challenge.decodeBase64API())
@@ -252,7 +259,7 @@ class AuthApi{
     }
 
     private fun parseCredentialDescriptors(
-            listAllow : List<AllowCredentials>
+            listAllow: List<AllowCredentials>
     ): List<PublicKeyCredentialDescriptor> {
         val list = mutableListOf<PublicKeyCredentialDescriptor>()
         listAllow.forEach {
@@ -296,8 +303,8 @@ class AuthApi{
 
     private fun parseRegisterResponse(body: ResponseBody): String {
         val jsonObject = JSONObject(body.string())
-        if(jsonObject.has("code")) {
-            if(jsonObject["code"] == 1) {
+        if (jsonObject.has("code")) {
+            if (jsonObject["code"] == 1) {
                 return "success"
             }
         }

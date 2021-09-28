@@ -152,6 +152,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                 val credential = PublicKeyCredential.deserializeFromBytes(bytes)
                 val response = credential.response
                 if (response is AuthenticatorErrorResponse) {
+                    mFidoResult?.success(false)
                     Toast.makeText(activity, response.errorMessage, Toast.LENGTH_LONG)
                             .show()
                 } else {
@@ -172,6 +173,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                 val credential = PublicKeyCredential.deserializeFromBytes(bytes)
                 val response = credential.response
                 if (response is AuthenticatorErrorResponse) {
+                    mFidoResult?.success("")
                     Toast.makeText(activity, response.errorMessage, Toast.LENGTH_LONG)
                             .show()
                 } else {
