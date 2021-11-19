@@ -18,15 +18,17 @@ package xyz.be.cakefido2.api
 
 import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.fido.fido2.Fido2ApiClient
-import com.google.android.gms.fido.fido2.Fido2PendingIntent
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredential
-import com.google.android.gms.tasks.Task
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import xyz.be.cakefido2.Cakefido2Plugin
+import java.lang.ref.WeakReference
 
 class MainViewModel constructor(context: Context) : ViewModel() {
 
@@ -34,9 +36,11 @@ class MainViewModel constructor(context: Context) : ViewModel() {
     val signInState = repository.signInState
     private val signinRequestChannel = Channel<PendingIntent>(capacity = Channel.CONFLATED)
     val signinRequests = signinRequestChannel.receiveAsFlow()
+    private var activity: WeakReference<FragmentActivity>? = null
 
-    fun setFido2ApiClient(client: Fido2ApiClient?) {
+    fun setFido2ApiClient(client: Fido2ApiClient?, activity: FragmentActivity?) {
         repository.setFido2APiClient(client)
+        this.activity = WeakReference(activity)
     }
 
     suspend fun registerRequest(accessToken: String): PendingIntent? {
@@ -61,7 +65,7 @@ class MainViewModel constructor(context: Context) : ViewModel() {
             repository.addUsername(userName)
             val intent = repository.signinRequest()
             if (intent != null) {
-                signinRequestChannel.send(intent)
+                activity?.get()?.startIntentSenderForResult(intent.intentSender, Cakefido2Plugin.REQUEST_CODE_SIGN, Intent(), 0, 0, 0)
             }
         }
     }

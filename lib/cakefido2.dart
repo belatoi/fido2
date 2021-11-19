@@ -20,6 +20,11 @@ class Cakefido2 {
     return isHeader;
   }
 
+  Future<bool> actionSetEnvironment(String env) async {
+    var isHeader = await _channel.invokeMethod('actionSetEnvironment', {"environment": env});
+    return isHeader;
+  }
+
   Future<bool?> actionRegisterRequest(String accessToken) async {
     final bool? isRegister = await _channel
         .invokeMethod('actionRegisterRequest', {"access_token": accessToken});

@@ -42,6 +42,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import ru.gildor.coroutines.okhttp.await
+import xyz.be.cakefido2.Utils
 import xyz.be.cakefido2.api.model.*
 import java.io.StringReader
 import java.io.StringWriter
@@ -53,18 +54,18 @@ import java.util.concurrent.TimeUnit
 class AuthApi {
 
     private val client: OkHttpClient = OkHttpClient.Builder()
-            .addInterceptor(AddHeaderInterceptor())
-            .addInterceptor(CurlInterceptor {
-                if (BuildConfig.DEBUG)
-                    Log.v("Ok2Curl", it)
-            })
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(40, TimeUnit.SECONDS)
-            .connectTimeout(40, TimeUnit.SECONDS)
-            .build()
+        .addInterceptor(AddHeaderInterceptor())
+        .addInterceptor(CurlInterceptor {
+            if (BuildConfig.DEBUG)
+                Log.v("Ok2Curl", it)
+        })
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(40, TimeUnit.SECONDS)
+        .connectTimeout(40, TimeUnit.SECONDS)
+        .build()
 
     companion object {
-        private const val BASE_URL = "https://gw-cake.veep.tech/api/v1/bank-api/fido2"
+        private val BASE_URL = Utils.getInstance().url
         private val JSON = "application/json".toMediaTypeOrNull()
         private const val SessionIdKey = "webauthn-session="
         private const val TAG = "AuthApi"
@@ -79,17 +80,17 @@ class AuthApi {
      */
     suspend fun registerRequest(accessToken: String): ApiResult<PublicKeyCredentialCreationOptions?> {
         val call = client.newCall(
-                Request.Builder()
-                        .url("$BASE_URL/register/begin")
-                        .method("POST", jsonRequestBody {
-                            name("access_token").value(accessToken)
-                        })
-                        .build()
+            Request.Builder()
+                .url("$BASE_URL/bank-api/fido2/register/begin")
+                .method("POST", jsonRequestBody {
+                    name("access_token").value(accessToken)
+                })
+                .build()
         )
         val response = call.await()
         return response.result("Error calling /registerRequest") {
             parsePublicKeyCredentialCreationOptions(
-                    body ?: throw ApiException("Empty response from /registerRequest")
+                body ?: throw ApiException("Empty response from /registerRequest")
             )
         }
     }
@@ -101,38 +102,38 @@ class AuthApi {
      * registered one.
      */
     suspend fun registerResponse(
-            sessionId: String,
-            accessToken: String,
-            credential: PublicKeyCredential
+        sessionId: String,
+        accessToken: String,
+        credential: PublicKeyCredential
     ): ApiResult<String> {
         val rawId = credential.rawId.toBase64()
         val response = credential.response as AuthenticatorAttestationResponse
 
         val call = client.newCall(
-                Request.Builder()
-                        .url("$BASE_URL/register/finish")
-                        .addHeader("cookie", formatCookie(sessionId))
-                        .method("POST", jsonRequestBody {
-                            name("id").value(rawId)
-                            name("type").value(PublicKeyCredentialType.PUBLIC_KEY.toString())
-                            name("rawId").value(rawId)
-                            name("response").objectValue {
-                                name("clientDataJSON").value(
-                                        response.clientDataJSON.toBase64()
-                                )
-                                name("attestationObject").value(
-                                        response.attestationObject.toBase64()
-                                )
-                            }
-                            name("access_token").value(accessToken)
-                        })
-                        .build()
+            Request.Builder()
+                .url("$BASE_URL/bank-api/fido2/register/finish")
+                .addHeader("cookie", formatCookie(sessionId))
+                .method("POST", jsonRequestBody {
+                    name("id").value(rawId)
+                    name("type").value(PublicKeyCredentialType.PUBLIC_KEY.toString())
+                    name("rawId").value(rawId)
+                    name("response").objectValue {
+                        name("clientDataJSON").value(
+                            response.clientDataJSON.toBase64()
+                        )
+                        name("attestationObject").value(
+                            response.attestationObject.toBase64()
+                        )
+                    }
+                    name("access_token").value(accessToken)
+                })
+                .build()
         )
         val apiResponse = call.await()
         return try {
             apiResponse.result("Error calling /registerResponse") {
                 parseRegisterResponse(
-                        body ?: throw ApiException("Empty response from /registerResponse")
+                    body ?: throw ApiException("Empty response from /registerResponse")
                 )
             }
         } catch (e: Exception) {
@@ -148,20 +149,20 @@ class AuthApi {
      * be sent back to the server in [signinResponse].
      */
     suspend fun signinRequest(
-            username: String
+        username: String
     ): ApiResult<PublicKeyCredentialRequestOptions?> {
         val call = client.newCall(
-                Request.Builder()
-                        .url("$BASE_URL/login/begin")
-                        .method("POST", jsonRequestBody {
-                            name("username").value(username)
-                        })
-                        .build()
+            Request.Builder()
+                .url("$BASE_URL/bank-api/fido2/login/begin")
+                .method("POST", jsonRequestBody {
+                    name("username").value(username)
+                })
+                .build()
         )
         val response = call.await()
         return response.result("Error calling /signinRequest") {
             parsePublicKeyCredentialRequestOptions(
-                    body ?: throw ApiException("Empty response from /signinRequest")
+                body ?: throw ApiException("Empty response from /signinRequest")
             )
         }
     }
@@ -173,38 +174,38 @@ class AuthApi {
      * registered one.
      */
     suspend fun signinResponse(
-            sessionId: String,
-            credential: PublicKeyCredential,
-            username: String
+        sessionId: String,
+        credential: PublicKeyCredential,
+        username: String
     ): ApiResult<JSONObject> {
         val rawId = credential.rawId.toBase64()
         val response = credential.response as AuthenticatorAssertionResponse
 
         val call = client.newCall(
-                Request.Builder()
-                        .url("$BASE_URL/login/finish")
-                        .addHeader("cookie", formatCookie(sessionId))
-                        .method("POST", jsonRequestBody {
-                            name("id").value(rawId)
-                            name("type").value(PublicKeyCredentialType.PUBLIC_KEY.toString())
-                            name("rawId").value(rawId)
-                            name("username").value(username)
-                            name("response").objectValue {
-                                name("clientDataJSON").value(
-                                        response.clientDataJSON.toBase64()
-                                )
-                                name("authenticatorData").value(
-                                        response.authenticatorData.toBase64()
-                                )
-                                name("signature").value(
-                                        response.signature.toBase64()
-                                )
-                                name("userHandle").value(
-                                        response.userHandle?.toBase64() ?: ""
-                                )
-                            }
-                        })
-                        .build()
+            Request.Builder()
+                .url("$BASE_URL/bank-api/fido2/login/finish")
+                .addHeader("cookie", formatCookie(sessionId))
+                .method("POST", jsonRequestBody {
+                    name("id").value(rawId)
+                    name("type").value(PublicKeyCredentialType.PUBLIC_KEY.toString())
+                    name("rawId").value(rawId)
+                    name("username").value(username)
+                    name("response").objectValue {
+                        name("clientDataJSON").value(
+                            response.clientDataJSON.toBase64()
+                        )
+                        name("authenticatorData").value(
+                            response.authenticatorData.toBase64()
+                        )
+                        name("signature").value(
+                            response.signature.toBase64()
+                        )
+                        name("userHandle").value(
+                            response.userHandle?.toBase64() ?: ""
+                        )
+                    }
+                })
+                .build()
         )
         val apiResponse = call.await()
         return apiResponse.result("Error calling /signingResponse") {
@@ -213,10 +214,12 @@ class AuthApi {
     }
 
     private fun parsePublicKeyCredentialRequestOptions(
-            body: ResponseBody
+        body: ResponseBody
     ): PublicKeyCredentialRequestOptions? {
         val builder = PublicKeyCredentialRequestOptions.Builder()
-        val jsonObject = JSONObject(body.string())
+        val res = body.string()
+        if (BuildConfig.DEBUG) Log.v("responseFido2", res)
+        val jsonObject = JSONObject(res)
         if (jsonObject.has("publicKey")) {
             val json = jsonObject.getJSONObject("publicKey").toString()
             val loginBeginModel = Gson().fromJson(json, LoginBeginModel::class.java)
@@ -230,10 +233,12 @@ class AuthApi {
     }
 
     private fun parsePublicKeyCredentialCreationOptions(
-            body: ResponseBody
+        body: ResponseBody
     ): PublicKeyCredentialCreationOptions? {
         val builder = PublicKeyCredentialCreationOptions.Builder()
-        val jsonObject = JSONObject(body.string())
+        val res = body.string()
+        if (BuildConfig.DEBUG) Log.v("responseFido2", res)
+        val jsonObject = JSONObject(res)
         if (jsonObject.has("publicKey")) {
             val json = jsonObject.getJSONObject("publicKey").toString()
             val registerBeginModel = Gson().fromJson(json, RegisterBeginModel::class.java)
@@ -259,16 +264,16 @@ class AuthApi {
     }
 
     private fun parseCredentialDescriptors(
-            listAllow: List<AllowCredentials>
+        listAllow: List<AllowCredentials>
     ): List<PublicKeyCredentialDescriptor> {
         val list = mutableListOf<PublicKeyCredentialDescriptor>()
         listAllow.forEach {
             list.add(
-                    PublicKeyCredentialDescriptor(
-                            PublicKeyCredentialType.PUBLIC_KEY.toString(),
-                            it.id.decodeBase64API(),
-                            /* transports */ null
-                    )
+                PublicKeyCredentialDescriptor(
+                    PublicKeyCredentialType.PUBLIC_KEY.toString(),
+                    it.id.decodeBase64API(),
+                    /* transports */ null
+                )
             )
         }
         return list
@@ -276,10 +281,10 @@ class AuthApi {
 
     private fun parseUser(user: UserRegisterBeginModel): PublicKeyCredentialUserEntity {
         return PublicKeyCredentialUserEntity(
-                user.id.decodeBase64API(),
-                user.name,
-                null, // icon
-                user.displayName
+            user.id.decodeBase64API(),
+            user.name,
+            null, // icon
+            user.displayName
         )
     }
 
@@ -302,7 +307,9 @@ class AuthApi {
     }
 
     private fun parseRegisterResponse(body: ResponseBody): String {
-        val jsonObject = JSONObject(body.string())
+        val res = body.string()
+        if (BuildConfig.DEBUG) Log.v("responseFido2", res)
+        val jsonObject = JSONObject(res)
         if (jsonObject.has("code")) {
             if (jsonObject["code"] == 1) {
                 return "success"

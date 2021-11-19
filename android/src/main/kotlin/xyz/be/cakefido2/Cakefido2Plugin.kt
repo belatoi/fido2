@@ -30,8 +30,8 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
     companion object {
-        private const val REQUEST_CODE_REGISTER = 1
-        private const val REQUEST_CODE_SIGN = 2
+         const val REQUEST_CODE_REGISTER = 1
+         const val REQUEST_CODE_SIGN = 2
     }
 
     private lateinit var channel: MethodChannel
@@ -63,6 +63,10 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                         ?: HashMap()
                 result.success(true)
             }
+            "actionSetEnvironment" -> {
+                Utils.getInstance().environment = map?.get("environment") as? String ?: ""
+                result.success(true)
+            }
             "actionSignInRequest" -> {
                 val userName = map?.get("user_name") as? String
                 viewModel.signinRequest(userName ?: "")
@@ -88,7 +92,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity as FragmentActivity
-        viewModel.setFido2ApiClient(Fido.getFido2ApiClient(activity))
+        viewModel.setFido2ApiClient(Fido.getFido2ApiClient(activity),activity)
         binding.addActivityResultListener(this)
         lifecycleScope.launch {
             viewModel.signinRequests.collect { intent ->
@@ -126,7 +130,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
     }
 
     override fun onDetachedFromActivity() {
-        viewModel.setFido2ApiClient(null)
+        viewModel.setFido2ApiClient(null,null)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {

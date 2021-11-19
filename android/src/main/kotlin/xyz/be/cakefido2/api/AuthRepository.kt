@@ -20,21 +20,13 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import androidx.annotation.WorkerThread
 import com.google.android.gms.fido.fido2.Fido2ApiClient
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredential
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import androidx.core.content.edit
-import androidx.lifecycle.asFlow
-import androidx.lifecycle.map
-import com.google.android.gms.fido.fido2.Fido2PendingIntent
-import com.google.android.gms.tasks.Task
 
 /**
  * Works with the API, the local data store, and FIDO2 API.

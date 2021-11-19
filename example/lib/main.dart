@@ -24,6 +24,9 @@ class _MyAppState extends State<MyApp> {
 
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
+    await Cakefido2.instance.setHeader(beBankUserInfoModel.toHeader());
+    var enable = await Cakefido2.instance
+        .actionRegisterRequest(beBankUserInfoModel.accessToken);
     // String platformVersion;
     // // Platform messages may fail, so we use a try/catch PlatformException.
     // // We also handle the message potentially returning null.
