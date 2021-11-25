@@ -157,8 +157,8 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                 val response = credential.response
                 if (response is AuthenticatorErrorResponse) {
                     mFidoResult?.success(false)
-                    Toast.makeText(activity, response.errorMessage, Toast.LENGTH_LONG)
-                            .show()
+//                    Toast.makeText(activity, response.errorMessage, Toast.LENGTH_LONG)
+//                            .show()
                 } else {
                     viewModel.registerResponse(credential)
                 }
@@ -178,8 +178,8 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                 val response = credential.response
                 if (response is AuthenticatorErrorResponse) {
                     mFidoResult?.success("")
-                    Toast.makeText(activity, response.errorMessage, Toast.LENGTH_LONG)
-                            .show()
+//                    Toast.makeText(activity, response.errorMessage, Toast.LENGTH_LONG)
+//                            .show()
                 } else {
                     viewModel.signinResponse(credential)
                 }
