@@ -24,14 +24,15 @@ import xyz.be.cakefido2.api.SignInState
 import kotlinx.coroutines.flow.collect
 
 /** Cakefido2Plugin */
-class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginRegistry.ActivityResultListener {
+class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler,
+    PluginRegistry.ActivityResultListener {
     /// The MethodChannel that will the communication between Flutter and native Android
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
     companion object {
-         const val REQUEST_CODE_REGISTER = 1
-         const val REQUEST_CODE_SIGN = 2
+        const val REQUEST_CODE_REGISTER = 1
+        const val REQUEST_CODE_SIGN = 2
     }
 
     private lateinit var channel: MethodChannel
@@ -40,6 +41,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
     private val lifecycleScope = CoroutineScope(Dispatchers.IO)
     private val mainScope = CoroutineScope(Dispatchers.Main)
     var mFidoResult: Result? = null
+    private var isFinish = true
 
     override fun onAttachedToEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(binding.binaryMessenger, "cakefido2")
@@ -55,12 +57,15 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                 result.success("Android ${android.os.Build.VERSION.RELEASE}")
             }
             "actionRegisterRequest" -> {
-                val accessToken = map?.get("access_token") as? String
-                registerRequest(accessToken ?: "")
+                if (isFinish) {
+                    isFinish = false
+                    val accessToken = map?.get("access_token") as? String
+                    registerRequest(accessToken ?: "")
+                }
             }
             "actionSetHeader" -> {
                 Utils.getInstance().header = map?.get("header") as? HashMap<String, String>
-                        ?: HashMap()
+                    ?: HashMap()
                 result.success(true)
             }
             "actionSetEnvironment" -> {
@@ -68,8 +73,11 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                 result.success(true)
             }
             "actionSignInRequest" -> {
-                val userName = map?.get("user_name") as? String
-                viewModel.signinRequest(userName ?: "")
+                if (isFinish) {
+                    isFinish = false
+                    val userName = map?.get("user_name") as? String
+                    viewModel.signinRequest(userName ?: "")
+                }
             }
             else -> {
                 result.notImplemented()
@@ -81,7 +89,19 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
         lifecycleScope.launch {
             val intent = viewModel.registerRequest(accessToken)
             if (intent != null) {
-                activity.startIntentSenderForResult(intent.intentSender, REQUEST_CODE_REGISTER, Intent(), 0, 0, 0)
+                activity.startIntentSenderForResult(
+                    intent.intentSender,
+                    REQUEST_CODE_REGISTER,
+                    Intent(),
+                    0,
+                    0,
+                    0
+                )
+            } else {
+                mainScope.launch {
+                    mFidoResult?.success("Expired")
+                    isFinish = true
+                }
             }
         }
     }
@@ -92,11 +112,18 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity as FragmentActivity
-        viewModel.setFido2ApiClient(Fido.getFido2ApiClient(activity),activity)
+        viewModel.setFido2ApiClient(Fido.getFido2ApiClient(activity), activity)
         binding.addActivityResultListener(this)
         lifecycleScope.launch {
             viewModel.signinRequests.collect { intent ->
-                activity.startIntentSenderForResult(intent.intentSender, REQUEST_CODE_SIGN, Intent(), 0, 0, 0)
+                activity.startIntentSenderForResult(
+                    intent.intentSender,
+                    REQUEST_CODE_SIGN,
+                    Intent(),
+                    0,
+                    0,
+                    0
+                )
             }
         }
         mainScope.launch {
@@ -108,15 +135,19 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                     }
                     is SignInState.SignInError -> {
                         mFidoResult?.success(state.data)
+                        isFinish = true
                     }
                     is SignInState.SignedIn -> {
                         mFidoResult?.success(state.data)
+                        isFinish = true
                     }
                     is SignInState.RegisterFailed -> {
-                        mFidoResult?.success(false)
+                        mFidoResult?.success("Fail")
+                        isFinish = true
                     }
                     is SignInState.RegisterPass -> {
-                        mFidoResult?.success(true)
+                        mFidoResult?.success("Success")
+                        isFinish = true
                     }
                 }
             }
@@ -130,7 +161,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
     }
 
     override fun onDetachedFromActivity() {
-        viewModel.setFido2ApiClient(null,null)
+        viewModel.setFido2ApiClient(null, null)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
@@ -151,14 +182,13 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
 //                Toast.makeText(this@MainActivity, "Cancel", Toast.LENGTH_LONG).show()
             bytes == null ->
                 Toast.makeText(activity, "Error", Toast.LENGTH_LONG)
-                        .show()
+                    .show()
             else -> {
                 val credential = PublicKeyCredential.deserializeFromBytes(bytes)
                 val response = credential.response
                 if (response is AuthenticatorErrorResponse) {
-                    mFidoResult?.success(false)
-//                    Toast.makeText(activity, response.errorMessage, Toast.LENGTH_LONG)
-//                            .show()
+                    mFidoResult?.success("")
+                    isFinish = true
                 } else {
                     viewModel.registerResponse(credential)
                 }
@@ -178,8 +208,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler, PluginR
                 val response = credential.response
                 if (response is AuthenticatorErrorResponse) {
                     mFidoResult?.success("")
-//                    Toast.makeText(activity, response.errorMessage, Toast.LENGTH_LONG)
-//                            .show()
+                    isFinish = true
                 } else {
                     viewModel.signinResponse(credential)
                 }

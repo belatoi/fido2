@@ -25,8 +25,8 @@ class Cakefido2 {
     return isHeader;
   }
 
-  Future<bool?> actionRegisterRequest(String accessToken) async {
-    final bool? isRegister = await _channel
+  Future<String?> actionRegisterRequest(String accessToken) async {
+    final String? isRegister = await _channel
         .invokeMethod('actionRegisterRequest', {"access_token": accessToken});
     return isRegister;
   }
