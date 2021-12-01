@@ -126,7 +126,7 @@ class AuthRepository constructor(context: Context) {
                         putString(PREF_LOCAL_CREDENTIAL_ID, credentialId)
                     }
                     if (result.data.isNotEmpty())
-                        signInStateMutable.emit(SignInState.RegisterPass(accessToken))
+                        signInStateMutable.emit(SignInState.RegisterPass(result.data))
                     else
                         signInStateMutable.emit(SignInState.RegisterFailed(accessToken))
                 }

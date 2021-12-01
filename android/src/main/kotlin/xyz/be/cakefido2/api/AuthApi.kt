@@ -312,7 +312,9 @@ class AuthApi {
         val jsonObject = JSONObject(res)
         if (jsonObject.has("code")) {
             if (jsonObject["code"] == 1) {
-                return "success"
+                return "Success"
+            } else if (jsonObject["code"] == 103 || jsonObject["code"] == 104 || jsonObject["code"] == 105) {
+                return "Expired"
             }
         }
         return ""

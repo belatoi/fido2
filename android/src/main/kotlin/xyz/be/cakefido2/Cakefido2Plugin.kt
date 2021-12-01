@@ -146,7 +146,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler,
                         isFinish = true
                     }
                     is SignInState.RegisterPass -> {
-                        mFidoResult?.success("Success")
+                        mFidoResult?.success(state.data)
                         isFinish = true
                     }
                 }

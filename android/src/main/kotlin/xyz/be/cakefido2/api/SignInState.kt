@@ -49,10 +49,10 @@ sealed class SignInState {
     ) : SignInState()
 
     data class RegisterPass(
-            val username: String
+            val data: String
     ) : SignInState()
 
     data class RegisterFailed(
-            val username: String
+            val data: String
     ) : SignInState()
 }
