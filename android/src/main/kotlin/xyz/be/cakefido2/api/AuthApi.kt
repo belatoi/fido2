@@ -65,7 +65,6 @@ class AuthApi {
         .build()
 
     companion object {
-        private val BASE_URL = Utils.getInstance().url
         private val JSON = "application/json".toMediaTypeOrNull()
         private const val SessionIdKey = "webauthn-session="
         private const val TAG = "AuthApi"
@@ -81,7 +80,7 @@ class AuthApi {
     suspend fun registerRequest(accessToken: String): ApiResult<PublicKeyCredentialCreationOptions?> {
         val call = client.newCall(
             Request.Builder()
-                .url("$BASE_URL/bank-api/fido2/register/begin")
+                .url("${Utils.getInstance().url}/bank-api/fido2/register/begin")
                 .method("POST", jsonRequestBody {
                     name("access_token").value(accessToken)
                 })
@@ -111,7 +110,7 @@ class AuthApi {
 
         val call = client.newCall(
             Request.Builder()
-                .url("$BASE_URL/bank-api/fido2/register/finish")
+                .url("${Utils.getInstance().url}/bank-api/fido2/register/finish")
                 .addHeader("cookie", formatCookie(sessionId))
                 .method("POST", jsonRequestBody {
                     name("id").value(rawId)
@@ -153,7 +152,7 @@ class AuthApi {
     ): ApiResult<PublicKeyCredentialRequestOptions?> {
         val call = client.newCall(
             Request.Builder()
-                .url("$BASE_URL/bank-api/fido2/login/begin")
+                .url("${Utils.getInstance().url}/bank-api/fido2/login/begin")
                 .method("POST", jsonRequestBody {
                     name("username").value(username)
                 })
@@ -183,7 +182,7 @@ class AuthApi {
 
         val call = client.newCall(
             Request.Builder()
-                .url("$BASE_URL/bank-api/fido2/login/finish")
+                .url("${Utils.getInstance().url}/bank-api/fido2/login/finish")
                 .addHeader("cookie", formatCookie(sessionId))
                 .method("POST", jsonRequestBody {
                     name("id").value(rawId)
