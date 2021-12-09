@@ -56,8 +56,8 @@ class AuthApi {
     private val client: OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(AddHeaderInterceptor())
         .addInterceptor(CurlInterceptor {
-//            if (BuildConfig.DEBUG)
-            Log.v("Ok2Curl", it)
+            if (BuildConfig.DEBUG)
+                Log.v("Ok2Curl", it)
         })
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(40, TimeUnit.SECONDS)
@@ -217,8 +217,8 @@ class AuthApi {
     ): PublicKeyCredentialRequestOptions? {
         val builder = PublicKeyCredentialRequestOptions.Builder()
         val res = body.string()
-//        if (BuildConfig.DEBUG)
-        Log.v("responseFido2", res)
+        if (BuildConfig.DEBUG)
+            Log.v("responseFido2", res)
         val jsonObject = JSONObject(res)
         if (jsonObject.has("publicKey")) {
             val json = jsonObject.getJSONObject("publicKey").toString()
@@ -237,8 +237,8 @@ class AuthApi {
     ): PublicKeyCredentialCreationOptions? {
         val builder = PublicKeyCredentialCreationOptions.Builder()
         val res = body.string()
-//        if (BuildConfig.DEBUG)
-        Log.v("responseFido2", res)
+        if (BuildConfig.DEBUG)
+            Log.v("responseFido2", res)
         val jsonObject = JSONObject(res)
         if (jsonObject.has("publicKey")) {
             val json = jsonObject.getJSONObject("publicKey").toString()
@@ -309,8 +309,8 @@ class AuthApi {
 
     private fun parseRegisterResponse(body: ResponseBody): String {
         val res = body.string()
-//        if (BuildConfig.DEBUG)
-        Log.v("responseFido2", res)
+        if (BuildConfig.DEBUG)
+            Log.v("responseFido2", res)
         val jsonObject = JSONObject(res)
         if (jsonObject.has("code")) {
             if (jsonObject["code"] == 1) {
