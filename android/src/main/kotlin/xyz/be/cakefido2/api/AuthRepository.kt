@@ -40,7 +40,6 @@ class AuthRepository constructor(context: Context) {
         private const val PREF_ACCESS_TOKEN = "accessToken"
         private const val PREF_SESSION_ID = "session_id"
         private const val PREF_CREDENTIALS = "credentials"
-        private const val PREF_LOCAL_CREDENTIAL_ID = "local_credential_id"
     }
 
     private val api: AuthApi = AuthApi()
@@ -116,14 +115,11 @@ class AuthRepository constructor(context: Context) {
         try {
             val accessToken = prefs.getString(PREF_ACCESS_TOKEN, null)!!
             val sessionId = prefs.getString(PREF_SESSION_ID, null)!!
-            val credentialId = credential.rawId.toBase64()
             when (val result = api.registerResponse(sessionId, accessToken, credential)) {
                 ApiResult.SignedOutFromServer -> forceSignOut()
                 is ApiResult.Success -> {
                     prefs.edit {
                         result.sessionId?.let { putString(PREF_SESSION_ID, it) }
-//                        putStringSet(PREF_CREDENTIALS, result.data.toStringSet())
-                        putString(PREF_LOCAL_CREDENTIAL_ID, credentialId)
                     }
                     if (result.data.isNotEmpty())
                         signInStateMutable.emit(SignInState.RegisterPass(result.data))
@@ -172,7 +168,6 @@ class AuthRepository constructor(context: Context) {
         try {
             val username = prefs.getString(PREF_USERNAME, null)!!
             val sessionId = prefs.getString(PREF_SESSION_ID, null)!!
-            val credentialId = credential.rawId.toBase64()
             when (val result = api.signinResponse(sessionId, credential, username)) {
                 ApiResult.SignedOutFromServer -> forceSignOut()
                 is ApiResult.Success -> {
