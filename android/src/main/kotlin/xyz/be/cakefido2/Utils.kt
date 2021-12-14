@@ -11,7 +11,7 @@ class Utils private constructor() {
                 "STAG" -> "https://gw-cake-new-2.veep.me/api/v1"
                 "QA" -> "https://gw-cake-qa-new.veep.me/api/v1"
                 "DEV" -> "https://gw-cake.veep.tech/api/v1"
-                else -> "https://gw-cake-qa-new.veep.me/api/v1"
+                else -> "https://gw.cake.vn/api/v1"
             }
         }
 

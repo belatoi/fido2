@@ -36,11 +36,9 @@ class MainViewModel constructor(context: Context) : ViewModel() {
     val signInState = repository.signInState
     private val signinRequestChannel = Channel<PendingIntent>(capacity = Channel.CONFLATED)
     val signinRequests = signinRequestChannel.receiveAsFlow()
-    private var activity: WeakReference<FragmentActivity>? = null
 
-    fun setFido2ApiClient(client: Fido2ApiClient?, activity: FragmentActivity?) {
+    fun setFido2ApiClient(client: Fido2ApiClient?) {
         repository.setFido2APiClient(client)
-        this.activity = WeakReference(activity)
     }
 
     suspend fun registerRequest(accessToken: String): PendingIntent? {
@@ -60,14 +58,9 @@ class MainViewModel constructor(context: Context) : ViewModel() {
         }
     }
 
-    fun signinRequest(userName: String) {
-        viewModelScope.launch {
-            repository.addUsername(userName)
-            val intent = repository.signinRequest()
-            if (intent != null) {
-                activity?.get()?.startIntentSenderForResult(intent.intentSender, Cakefido2Plugin.REQUEST_CODE_SIGN, Intent(), 0, 0, 0)
-            }
-        }
+    suspend fun signinRequest(userName: String): PendingIntent? {
+        repository.addUsername(userName)
+        return repository.signinRequest()
     }
 
     fun signinResponse(credential: PublicKeyCredential) {

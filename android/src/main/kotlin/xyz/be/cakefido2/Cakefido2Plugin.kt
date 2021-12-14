@@ -76,7 +76,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler,
                 if (isFinish) {
                     isFinish = false
                     val userName = map?.get("user_name") as? String
-                    viewModel.signinRequest(userName ?: "")
+                    signinRequest(userName ?: "")
                 }
             }
             else -> {
@@ -106,13 +106,29 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler,
         }
     }
 
+    private fun signinRequest(userName: String) {
+        lifecycleScope.launch {
+            val intent = viewModel.signinRequest(userName)
+            if (intent != null) {
+                activity.startIntentSenderForResult(
+                    intent.intentSender,
+                    REQUEST_CODE_SIGN,
+                    Intent(),
+                    0,
+                    0,
+                    0
+                )
+            }
+        }
+    }
+
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity as FragmentActivity
-        viewModel.setFido2ApiClient(Fido.getFido2ApiClient(activity), activity)
+        viewModel.setFido2ApiClient(Fido.getFido2ApiClient(activity))
         binding.addActivityResultListener(this)
         lifecycleScope.launch {
             viewModel.signinRequests.collect { intent ->
@@ -138,6 +154,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler,
                         isFinish = true
                     }
                     is SignInState.SignedIn -> {
+                        channel.invokeMethod("tracking_done", "")
                         mFidoResult?.success(state.data)
                         isFinish = true
                     }
@@ -161,7 +178,7 @@ class Cakefido2Plugin : FlutterPlugin, ActivityAware, MethodCallHandler,
     }
 
     override fun onDetachedFromActivity() {
-        viewModel.setFido2ApiClient(null, null)
+        viewModel.setFido2ApiClient(null)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {

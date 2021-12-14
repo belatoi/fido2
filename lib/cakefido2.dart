@@ -36,4 +36,18 @@ class Cakefido2 {
         .invokeMethod('actionSignInRequest', {"user_name": userName});
     return version;
   }
+  
+  void trackingDone(Function tracking){
+    _channel.setMethodCallHandler((call) async {
+      switch (call.method) {
+        case "tracking_done":
+          {
+            tracking.call();
+          }
+          break;
+        default:
+          break;
+      }
+    });
+  }
 }
