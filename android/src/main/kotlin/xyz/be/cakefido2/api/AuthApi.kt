@@ -105,7 +105,7 @@ class AuthApi {
         accessToken: String,
         credential: PublicKeyCredential
     ): ApiResult<String> {
-        val rawId = credential.rawId.toBase64()
+        val rawId = credential.rawId?.toBase64() ?: ""
         val response = credential.response as AuthenticatorAttestationResponse
 
         val call = client.newCall(
@@ -177,7 +177,7 @@ class AuthApi {
         credential: PublicKeyCredential,
         username: String
     ): ApiResult<JSONObject> {
-        val rawId = credential.rawId.toBase64()
+        val rawId = credential.rawId?.toBase64() ?: ""
         val response = credential.response as AuthenticatorAssertionResponse
 
         val call = client.newCall(
